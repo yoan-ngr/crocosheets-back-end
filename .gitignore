@@ -5,3 +5,4 @@
 /httpRequests/
 /node_modules/
 .idea
+db.sqlite
