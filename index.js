@@ -6,9 +6,12 @@ const app = express();
 
 var db = require('./database');
 var bodyParser = require("body-parser");
+var cors = require('cors')
 const bcrypt = require("bcrypt");
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+app.use(cors())
+
 
 app.get('/', (req, res) => {
     res.send('<h1>Hello world</h1>');
