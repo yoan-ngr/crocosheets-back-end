@@ -99,47 +99,42 @@ app.post("/api/user/auth",(req, res, next) => {
         password: req.body.password ? hash : null
 
     }
+    let id
+    let password_bdd
 
-    var sql= 'SELECT id FROM user WHERE email = ?' ;
+    var sql= 'SELECT id,password FROM user WHERE email = ?' ;
 
-    db.run(sql, data.email, function (err, result) {
+    db.get(sql, data.email, function (err, result) {
         if (err){
             res.status(400).json({"error": err.message})
             return;
         }
-        res1.json({
-            "message": "success",
-            "data": data,
-            "id" : this.lastID
-        })
+        id = result.id
+        password_bdd = result.password
     })
-
+/*
     var sql2='SELECT password FROM user WHERE email = ?';
 
-    db.run(sql, res1.json.data, function (err, result) {
+    db.get(sql, id, function (err, result) {
         if (err){
             res.status(400).json({"error": err.message})
             return;
         }
-        res2.json({
-            "message": "success",
-            "data": data,
-            "id" : this.lastID
-        })
+        password_bdd = row
     })
-
-    if (res.json.message.equals("succes") && res2.json.message.equals("succes")){
+*/
+    if (!id.isNull() && password_bdd.equals(data.password)){
 
         var sql3='SELECT idToken FROM jwt WHERE idUser = ?';
 
-        db.run(sql3,res1.json.data,function (err, result){
+        db.get(sql3,id,function (err, result){
             if(err){
                 const token = generateAccessToken({ username: req.body.username });
                 res.json(token);
             }
             else {
                 var sql4 = 'DELETE FROM jwt WHERE idUser = ?';
-                db.run(sql4, res1.json.data, function (err, result) {
+                db.run(sql4, id, function (err, result) {
                     if (err) {
                         res.status(400).json({"error": err.message})
                         return;
@@ -150,7 +145,7 @@ app.post("/api/user/auth",(req, res, next) => {
             }
             var insert = 'INSERT INTO jwt (idUser, data, tokenSecret, expirationTime) VALUES (?,"auth_autorized",' +
                 '"09f26e402586e2faa8da4c98a35f1b20d6b033c6097befa8be3486a829587fe2f90a832bd3ff9d42710a4da095a2ce285b009f0c3730cd9b8e1af3eb84df6611","500")'
-            db.run(insert,res1.json.data,function (err,result){
+            db.run(insert,id,function (err,result){
                 if (err){
                     res.status(400).json({"error": err.message})
                     return;

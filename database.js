@@ -43,7 +43,12 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
             tokenSecret text, 
             expirationTime number,
             FOREIGN KEY (idUser) REFERENCES user(id)
-            )`)
+            )`,
+            (err) => {
+                if (err) {
+                    // Table already created
+                }
+            })
     }
 });
 
