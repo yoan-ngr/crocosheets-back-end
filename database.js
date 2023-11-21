@@ -36,6 +36,14 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
                     });
                 }
             });
+        db.run(`CREATE TABLE jwt (
+            idToken INTEGER PRIMARY KEY AUTOINCREMENT,
+            idUser INTEGER,
+            data text, 
+            tokenSecret text, 
+            expirationTime number,
+            FOREIGN KEY (idUser) REFERENCES user(id)
+            )`)
     }
 });
 
