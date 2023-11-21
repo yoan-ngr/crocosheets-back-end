@@ -55,39 +55,58 @@ app.get("/api/user/:id", (req, res, next) => {
     });
 });
 
-app.post("/api/user/", (req, res, next) => {
-    var errors=[]
+app.post("/api/user/", (
+    req,
+    res, next) => {
+    let errors=[]
     if (!req.body.password){
         errors.push("No password specified");
     }
     if (!req.body.email){
         errors.push("No email specified");
     }
+    if (!req.body.first_name){
+        errors.push("No first name specified");
+    }
+    if (!req.body.last_name){
+        errors.push("No last name specified");
+    }
     if (errors.length){
         res.status(400).json({"error":errors.join(",")});
         return;
     }
 
-    var saltRounds = 10;
+    console.log(req.body.password)
+
+    let saltRounds = 10;
     bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
-        var data = {
-            name: req.body.name,
-            email: req.body.email,
-            password : hash
-        }
-        var sql ='INSERT INTO user (name, email, password) VALUES (?,?,?)'
-        var params =[data.name, data.email, data.password]
-        db.run(sql, params, function (err, result) {
-            if (err){
-                res.status(400).json({"error": err.message})
-                return;
+        if(!err){
+            let data = {
+                name: req.body.name,
+                email: req.body.email,
+                first_name: req.body.first_name,
+                last_name: req.body.last_name,
+                password : hash
             }
-            res.json({
-                "message": "success",
-                "data": data,
-                "id" : this.lastID
+            let sql ='INSERT INTO user (first_name, last_name, email, password) VALUES (?, ?,?,?)'
+            let params =[data.first_name, data.last_name, data.email, data.password]
+            db.run(sql, params, function (err, result) {
+                if (err){
+                    res.status(400).json({"error": err.message})
+                    return;
+                }
+                res.json({
+                    "message": "success",
+                    "data": data,
+                    "id" : this.lastID
+                })
+            });
+        }else{
+            res.status(400).json({
+                error : "Hash error"
             })
-        });
+        }
+
     });
 
 })
@@ -108,10 +127,11 @@ app.post("/api/user/auth",(
         return;
     }
 
+    console.log(req.body.password)
+
     let data = {
         email: req.body.email,
         password: req.body.password
-
     }
 
     let id
@@ -130,7 +150,7 @@ app.post("/api/user/auth",(
         }
         id = result.id
         password_bdd = result.password
-
+        console.log(password_bdd)
 
         bcrypt.compare(data.password, password_bdd,function(err,result) {
             if(err){
