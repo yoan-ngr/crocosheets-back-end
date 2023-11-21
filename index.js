@@ -93,12 +93,24 @@ app.post("/api/user/", (req, res, next) => {
 })
 
 app.post("/api/user/auth",(req, res, next) => {
-    var errors=[] ;
+    var errors=[]
+    if (!req.body.password){
+        errors.push("No password specified");
+    }
+    if (!req.body.email){
+        errors.push("No email specified");
+    }
+    if (errors.length){
+        res.status(400).json({"error":errors.join(",")});
+        return;
+    }
+
     var data = {
         email: req.body.email,
-        password: req.body.password ? hash : null
+        password: req.body.password
 
     }
+
     let id
     let password_bdd
 
@@ -109,51 +121,62 @@ app.post("/api/user/auth",(req, res, next) => {
             res.status(400).json({"error": err.message})
             return;
         }
-        id = result.id
-        password_bdd = result.password
-    })
-/*
-    var sql2='SELECT password FROM user WHERE email = ?';
-
-    db.get(sql, id, function (err, result) {
-        if (err){
-            res.status(400).json({"error": err.message})
+        else if (result === undefined){
+            res.status(400).json({"error": "email or password incorrect"})
             return;
         }
-        password_bdd = row
-    })
-*/
-    if (!id.isNull() && password_bdd.equals(data.password)){
+        id = result.id
+        password_bdd = result.password
 
-        var sql3='SELECT idToken FROM jwt WHERE idUser = ?';
 
-        db.get(sql3,id,function (err, result){
+        bcrypt.compare(data.password, password_bdd,function(err,result) {
             if(err){
-                const token = generateAccessToken({ username: req.body.username });
-                res.json(token);
+                res.status(400).json({"error": err.message})
+                return;
             }
-            else {
-                var sql4 = 'DELETE FROM jwt WHERE idUser = ?';
-                db.run(sql4, id, function (err, result) {
-                    if (err) {
+            if(!result) {
+                res.status(400).json({"error": "email or password incorrect"})
+                return;
+            }
+            if(result){
+                var sql3='SELECT idToken FROM jwt WHERE idUser = ?';
+
+                const token = generateAccessToken({username : req.body.username});
+                db.get(sql3,id,function (err, result){
+                    if(err){
                         res.status(400).json({"error": err.message})
                         return;
                     }
-                    res.json(token);
+                    else if(result===""){
+                        res.json(token);
+                    }
+                    else {
+                        var sql4 = 'DELETE FROM jwt WHERE idUser = ?';
+                        db.run(sql4, id, function (err, result) {
+                            if (err) {
+                                res.status(400).json({"error": err.message})
+                                return;
+                            }
+                            res.json(token);
 
+                        })
+                    }
+                    var insert = 'INSERT INTO jwt (idUser, data, tokenSecret, expirationTime) VALUES (?,"auth_autorized",' +
+                        '"09f26e402586e2faa8da4c98a35f1b20d6b033c6097befa8be3486a829587fe2f90a832bd3ff9d42710a4da095a2ce285b009f0c3730cd9b8e1af3eb84df6611","1800")'
+                    db.run(insert,id,function (err,result){
+                        if (err){
+                            res.status(400).json({"error": err.message})
+                            return;
+                        }
+                    })
                 })
             }
-            var insert = 'INSERT INTO jwt (idUser, data, tokenSecret, expirationTime) VALUES (?,"auth_autorized",' +
-                '"09f26e402586e2faa8da4c98a35f1b20d6b033c6097befa8be3486a829587fe2f90a832bd3ff9d42710a4da095a2ce285b009f0c3730cd9b8e1af3eb84df6611","500")'
-            db.run(insert,id,function (err,result){
-                if (err){
-                    res.status(400).json({"error": err.message})
-                    return;
-                }
-            })
-        })
+        });
+    })
 
-    }
+
+
+
 })
 
 app.patch("/api/user/:id", (req, res, next) => {
