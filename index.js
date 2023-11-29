@@ -15,16 +15,19 @@ const userRoutes = require('./routes/user');
 const authRoutes = require('./routes/auth');
 
 
-var db = require('./database');
-var bodyParser = require("body-parser");
-var cors = require('cors')
+const db = require('./database');
+const bodyParser = require("body-parser");
+const cors = require('cors')
 const bcrypt = require("bcrypt");
+
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+app.use(cors({
+    credentials: true,
+}))
 
 app.use('/api/user', userRoutes);
 app.use('/api/auth', authRoutes);
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
-app.use(cors())
 
 
 app.get('/', (req, res) => {
