@@ -18,7 +18,7 @@ router.post('/login', (
         return;
     }
 
-    console.log(req.body.password)
+    //console.log(req.body.password)
 
     let data = {
         email: req.body.email,

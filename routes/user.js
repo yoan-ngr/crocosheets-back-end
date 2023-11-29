@@ -52,9 +52,9 @@ router.post('/', (
         return;
     }
 
-    console.log(req.body.password)
+    //console.log(req.body.password)
 
-    let saltRounds = process.env.SALT_ROUNDS;
+    let saltRounds = parseInt(process.env.SALT_ROUNDS);
     bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
         if(!err){
             let data = {
@@ -78,6 +78,7 @@ router.post('/', (
                 })
             });
         }else{
+            console.log(err)
             res.status(400).json({
                 error : "Hash error"
             })
@@ -111,7 +112,7 @@ router.patch('/:id', (
     req,
     res) => {
 
-    var saltRounds = process.env.SALT_ROUNDS;
+    let saltRounds = parseInt(process.env.SALT_ROUNDS);
     bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
         var data = {
             name: req.body.name,
