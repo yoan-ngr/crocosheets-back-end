@@ -28,7 +28,7 @@ router.post('/login', (
     let id
     let password_bdd
 
-    let sql= 'SELECT id,password FROM user WHERE email = ?' ;
+    let sql= 'SELECT * FROM user WHERE email = ?' ;
 
     db.get(sql, data.email, function (err, result) {
         if (err){
@@ -41,6 +41,8 @@ router.post('/login', (
         }
         id = result.id
         password_bdd = result.password
+        let first_name = result.first_name
+        let last_name = result.last_name
         console.log(password_bdd)
 
         bcrypt.compare(data.password, password_bdd,function(err,result) {
@@ -71,7 +73,12 @@ router.post('/login', (
                                 res.status(400).json({"error": err.message})
                                 return;
                             }
-                            res.json(token);
+
+                            res.json({
+                                token : token,
+                                first_name : first_name,
+                                last_name: last_name,
+                            });
 
                         })
                     }
