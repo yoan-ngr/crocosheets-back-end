@@ -55,6 +55,37 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
                     console.log("Table 'jwt' créé avec succès.")
                 }
             });
+        db.run(`CREATE TABLE sheet (
+            idSheet INTEGER PRIMARY KEY AUTOINCREMENT,
+            nomDocument text,
+            dateDeModification date, 
+            dateDeCreation date, 
+            proprietaire INTEGER,
+            FOREIGN KEY (proprietaire) REFERENCES user(id)
+            )`,
+            (err) => {
+                if (err) {
+                    // Table already created
+                    console.log("Table 'sheet' déjà existante, réutilisation des données.")
+                }else{
+                    console.log("Table 'sheet' créé avec succès.")
+                }
+            });
+        db.run(`CREATE TABLE participation (
+            idSheet INTEGER,
+            participant INTEGER,
+            FOREIGN KEY (participant) REFERENCES user(id),
+            FOREIGN KEY (idSheet) REFERENCES sheet(idSheet),
+            PRIMARY KEY (idSheet, participant)
+            )`,
+            (err) => {
+                if (err) {
+                    // Table already created
+                    console.log("Table 'participation' déjà existante, réutilisation des données.")
+                }else{
+                    console.log("Table 'participation' créé avec succès.")
+                }
+            });
     }
 });
 
