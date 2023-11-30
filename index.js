@@ -13,6 +13,7 @@ dotenv.config();
 
 const userRoutes = require('./routes/user');
 const authRoutes = require('./routes/auth');
+const sheetRoutes = require('./routes/sheet');
 
 
 const db = require('./database');
@@ -28,6 +29,7 @@ app.use(cors({
 
 app.use('/api/user', userRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/sheet', sheetRoutes);
 
 
 app.get('/', (req, res) => {
