@@ -18,8 +18,6 @@ router.post('/login', (
         return;
     }
 
-    //console.log(req.body.password)
-
     let data = {
         email: req.body.email,
         password: req.body.password
@@ -43,7 +41,6 @@ router.post('/login', (
         password_bdd = result.password
         let first_name = result.first_name
         let last_name = result.last_name
-        console.log(password_bdd)
 
         bcrypt.compare(data.password, password_bdd,function(err,result) {
             if(err){
@@ -89,10 +86,36 @@ router.post('/login', (
                             res.status(400).json({"error": err.message})
                             return;
                         }
+
                     })
                 })
             }
         });
+    })
+})
+
+
+router.post('/logout',(req, res) =>{
+    let errors=[]
+    if (!req.body.id){
+        errors.push("No id specified");
+    }
+    if (errors.length){
+        res.status(400).json({"error":errors.join(",")});
+        return;
+    }
+
+    let idUser = req.body.id;
+    let sql= 'DELETE FROM jwt WHERE idUser = ?';
+
+    db.run(sql,idUser,function (err,row){
+        if (err){
+            res.status(400).json({"error": err.message})
+            return;
+        }
+        res.json({
+            "message":"success"
+        })
     })
 })
 
