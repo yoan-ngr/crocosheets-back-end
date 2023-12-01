@@ -37,8 +37,26 @@ app.get('/', (req, res) => {
 });
 
 app.get("/api/users", (req, res, next) => {
-    var sql = "select * from user"
-    var params = []
+    let sql = "select * from user"
+    let params = []
+    db.all(sql, params, (err, rows) => {
+        if (err) {
+            res.status(400).json({"error":err.message});
+            return;
+        }
+        res.json({
+            "message":"success",
+            "data":rows
+        })
+    });
+});
+
+app.get('/api/sheets/:userid', (
+    req,
+    res) => {
+
+    let sql = "select * from sheet where proprietaire = ?"
+    let params = [req.params.userid]
     db.all(sql, params, (err, rows) => {
         if (err) {
             res.status(400).json({"error":err.message});
