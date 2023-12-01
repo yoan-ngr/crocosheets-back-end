@@ -28,7 +28,7 @@ router.get('/sheet/:id', (
     res.send({message:'OK'});
 });
 
-router.delete('/sheet/:id', (
+router.delete('/:id', (
     req,
     res) => {
     res.send({message:'OK'});
