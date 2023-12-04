@@ -10,6 +10,8 @@ router.post('/', (
         proprietaire: req.body.proprietaire
     }
 
+
+
     let sql= 'INSERT INTO sheet(nomDocument, dateDeModification, dateDeCreation, proprietaire) VALUES ("Sheet !", datetime(), datetime(), ? )' ;
 
     db.run(sql, data.proprietaire, function (err, result) {
@@ -19,7 +21,20 @@ router.post('/', (
         }
     })
 
-    res.send({message:'OK'});
+    sql= 'SELECT MAX(idsheet) FROM sheet' ;
+
+    db.get(sql, function (err, result) {
+        if (err) {
+            res.status(400).json({"error": err.message})
+            console.log(err)
+        }else{
+            console.log(result)
+            res.send({message:'OK', data : res});
+            return res;
+        }
+    })
+
+
 });
 
 router.get('/sheet/:id', (
