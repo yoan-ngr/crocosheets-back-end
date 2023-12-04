@@ -21,7 +21,7 @@ router.post('/', (
         }
     })
 
-    sql= 'SELECT MAX(idsheet) FROM sheet' ;
+    sql= 'SELECT MAX(idsheet) AS maxSheet FROM sheet' ;
 
     db.get(sql, function (err, result) {
         if (err) {
@@ -29,7 +29,7 @@ router.post('/', (
             console.log(err)
         }else{
             console.log(result)
-            res.send({message:'OK', data : res});
+            res.send({message:'OK', data : result});
             return res;
         }
     })
