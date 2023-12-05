@@ -82,6 +82,11 @@ io.on('connection',(socket)=> {
         console.log('connected');
         socket.on('disconnect',()=>{
             console.log('disconnected');
+            io.emit('user_disconnected');
+        })
+        socket.on('identification',(id) => {
+            io.emit('user_connected',id);
+            console.log("utilisateur connecté :"+id);
         })
     });
 
