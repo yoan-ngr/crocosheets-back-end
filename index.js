@@ -10,7 +10,7 @@ const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 const server = createServer(app);
 const port = 3000;
-const io = new Server(server);
+
 
 // get config vars
 dotenv.config();
@@ -23,6 +23,9 @@ const sheetRoutes = require('./routes/sheet');
 const db = require('./database');
 const bodyParser = require("body-parser");
 const cors = require('cors')
+const io = new Server(server,{cors : {
+    origin : "http://localhost:5173"
+    }});
 const bcrypt = require("bcrypt");
 
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -72,6 +75,17 @@ app.get('/api/sheets/:userid', (
         })
     });
 });
+
+
+
+io.on('connection',(socket)=> {
+        console.log('connected');
+        socket.on('disconnect',()=>{
+            console.log('disconnected');
+        })
+    });
+
+
 
 
 

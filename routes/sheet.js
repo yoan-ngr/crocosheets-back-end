@@ -1,3 +1,4 @@
+const db = require("../database");
 module.exports = function (io) {
 
     const express = require('express'), router = express.Router();
@@ -53,21 +54,18 @@ module.exports = function (io) {
                 res.status(404).json({"error" : "No sheet"});
                 return;
             }
-
-
-
             res.json({
                 "message":"success",
                 "data":row
             })
 
-            console.log("Monsieur Pujadas")
-            io.on('connection',(socket) => {
-               console.log("connected")
-            });
         });
 
     });
+
+
+
+
 
     router.delete('/:id', (
         req,
