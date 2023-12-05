@@ -46,7 +46,16 @@ router.get('/sheet/:id', (
 router.delete('/:id', (
     req,
     res) => {
-    res.send({message:'OK'});
+    db.run(
+        'DELETE FROM sheet WHERE idSheet = ?',
+        req.params.id,
+        function (err, result) {
+            if (err){
+                res.status(400).json({"error": res.message})
+                return;
+            }
+            res.json({"message":"sheet correctly deleted", changes: this.changes})
+        });
 });
 
 
