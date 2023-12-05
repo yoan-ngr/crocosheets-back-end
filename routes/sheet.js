@@ -82,6 +82,31 @@ module.exports = function (io) {
             });
     });
 
+    router.patch('/:id',(req,res) => {
+
+        let errors =[];
+
+        if (!req.body.newName){
+            errors.push("No newName specified");
+
+        }
+        if (errors.length){
+            res.status(400).json({"error":errors.join(",")});
+            return;
+        }
+
+        let newName = req.body.newName;
+
+        let sql = 'UPDATE sheet SET nomDocument = ? WHERE idSheet = ?';
+        db.run(sql,[newName,req.params.id],function (err,result){
+            if (err){
+                res.status(400).json({"error": err.message})
+                return;
+            }
+            res.json({"message":"nom modifié"});
+        })
+    })
+
 
 
     return router;
