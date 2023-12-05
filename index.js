@@ -82,12 +82,17 @@ let users = [];
 
 io.on('connection',(socket)=> {
         console.log('connected');
+        let username = "";
         socket.on('disconnect',()=>{
-            console.log('disconnected');
-            io.emit('user_disconnected');
+            console.log(username + ' disconnected');
+            users.splice(users.indexOf(username), 1);
+            io.emit('user_disconnected', users);
         })
         socket.on('identification',(id) => {
-            users.add(id);
+            if(!users.includes(id))
+                users.push(id);
+
+            username = id;
             io.emit('user_connected',users);
             console.log("utilisateur connecté :"+id);
         })
