@@ -77,6 +77,8 @@ app.get('/api/sheets/:userid', (
 });
 
 
+let users = [];
+
 
 io.on('connection',(socket)=> {
         console.log('connected');
@@ -85,7 +87,8 @@ io.on('connection',(socket)=> {
             io.emit('user_disconnected');
         })
         socket.on('identification',(id) => {
-            io.emit('user_connected',id);
+            users.add(id);
+            io.emit('user_connected',users);
             console.log("utilisateur connecté :"+id);
         })
     });
