@@ -37,10 +37,26 @@ router.post('/', (
 
 });
 
-router.get('/sheet/:id', (
+router.get('/:id', (
     req,
     res) => {
-    res.send({message:'OK'});
+    let params = [req.params.id];
+    let sql = "select * from sheet where idSheet = ?";
+    db.get(sql,params,(err, row)=>{
+        if (err) {
+            res.status(400).json({"error":err.message});
+            return;
+        }
+        if (row===undefined) {
+            res.status(404).json({"error" : "No sheet"});
+            return;
+        }
+        res.json({
+            "message":"success",
+            "data":row
+        })
+    });
+
 });
 
 router.delete('/:id', (
@@ -51,10 +67,10 @@ router.delete('/:id', (
         req.params.id,
         function (err, result) {
             if (err){
-                res.status(400).json({"error": res.message})
+                res.status(400).json({"error": err.message})
                 return;
             }
-            res.json({"message":"sheet correctly deleted", changes: this.changes})
+            res.json({"message":"sheet correctly deleted"})
         });
 });
 
