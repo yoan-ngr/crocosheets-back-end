@@ -1,78 +1,90 @@
-const express = require('express'), router = express.Router();
-const db = require("../database");
+module.exports = function (io) {
 
-router.post('/', (
-    req,
-    res) => {
+    const express = require('express'), router = express.Router();
+    const db = require("../database");
 
-
-    let data = {
-        proprietaire: req.body.proprietaire
-    }
+    router.post('/', (
+        req,
+        res) => {
 
 
-
-    let sql= 'INSERT INTO sheet(nomDocument, dateDeModification, dateDeCreation, proprietaire) VALUES ("Sheet !", datetime(), datetime(), ? )' ;
-
-    db.run(sql, data.proprietaire, function (err, result) {
-        if (err) {
-            //res.status(400).json({"error": err.message})
-            console.log(err)
+        let data = {
+            proprietaire: req.body.proprietaire
         }
-    })
-
-    sql= 'SELECT MAX(idsheet) AS maxSheet FROM sheet' ;
-
-    db.get(sql, function (err, result) {
-        if (err) {
-            res.status(400).json({"error": err.message})
-            console.log(err)
-        }else{
-            console.log(result)
-            res.send({message:'OK', data : result});
-            return res;
-        }
-    })
 
 
-});
 
-router.get('/:id', (
-    req,
-    res) => {
-    let params = [req.params.id];
-    let sql = "select * from sheet where idSheet = ?";
-    db.get(sql,params,(err, row)=>{
-        if (err) {
-            res.status(400).json({"error":err.message});
-            return;
-        }
-        if (row===undefined) {
-            res.status(404).json({"error" : "No sheet"});
-            return;
-        }
-        res.json({
-            "message":"success",
-            "data":row
+        let sql= 'INSERT INTO sheet(nomDocument, dateDeModification, dateDeCreation, proprietaire) VALUES ("Sheet !", datetime(), datetime(), ? )' ;
+
+        db.run(sql, data.proprietaire, function (err, result) {
+            if (err) {
+                //res.status(400).json({"error": err.message})
+                console.log(err)
+            }
         })
+
+        sql= 'SELECT MAX(idsheet) AS maxSheet FROM sheet' ;
+
+        db.get(sql, function (err, result) {
+            if (err) {
+                res.status(400).json({"error": err.message})
+                console.log(err)
+            }else{
+                console.log(result)
+                res.send({message:'OK', data : result});
+                return res;
+            }
+        })
+
+
     });
 
-});
-
-router.delete('/:id', (
-    req,
-    res) => {
-    db.run(
-        'DELETE FROM sheet WHERE idSheet = ?',
-        req.params.id,
-        function (err, result) {
-            if (err){
-                res.status(400).json({"error": err.message})
+    router.get('/:id', (
+        req,
+        res) => {
+        let params = [req.params.id];
+        let sql = "select * from sheet where idSheet = ?";
+        db.get(sql,params,(err, row)=>{
+            if (err) {
+                res.status(400).json({"error":err.message});
                 return;
             }
-            res.json({"message":"sheet correctly deleted"})
+            if (row===undefined) {
+                res.status(404).json({"error" : "No sheet"});
+                return;
+            }
+
+
+
+            res.json({
+                "message":"success",
+                "data":row
+            })
+
+            console.log("Monsieur Pujadas")
+            io.on('connection',(socket) => {
+               console.log("connected")
+            });
         });
-});
+
+    });
+
+    router.delete('/:id', (
+        req,
+        res) => {
+        db.run(
+            'DELETE FROM sheet WHERE idSheet = ?',
+            req.params.id,
+            function (err, result) {
+                if (err){
+                    res.status(400).json({"error": err.message})
+                    return;
+                }
+                res.json({"message":"sheet correctly deleted"})
+            });
+    });
 
 
-module.exports = router;
+
+    return router;
+}

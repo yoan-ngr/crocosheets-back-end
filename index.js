@@ -1,5 +1,6 @@
 const express = require('express');
 const { createServer } = require('node:http');
+const { Server } = require('socket.io');
 
 // app est la fonction de rappel créée par Express
 const app = express();
@@ -7,6 +8,9 @@ const app = express();
 const jwt = require('jsonwebtoken');
 
 const dotenv = require('dotenv');
+const server = createServer(app);
+const port = 3000;
+const io = new Server(server);
 
 // get config vars
 dotenv.config();
@@ -29,7 +33,7 @@ app.use(cors({
 
 app.use('/api/user', userRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/api/sheet', sheetRoutes);
+app.use('/api/sheet', sheetRoutes(io));
 
 
 app.get('/', (req, res) => {
@@ -69,8 +73,7 @@ app.get('/api/sheets/:userid', (
     });
 });
 
-const server = createServer(app);
-const port = 3000;
+
 
 // lancement du serveur avec log du moment où il est prêt
 server.listen(port, () => console.log(`Serveur lancé sur http://localhost:${port}`));
