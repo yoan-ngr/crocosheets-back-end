@@ -13,8 +13,6 @@ module.exports = function (io) {
             proprietaire: req.body.proprietaire
         }
 
-
-
         let sql= 'INSERT INTO sheet(nomDocument, dateDeModification, dateDeCreation, proprietaire) VALUES ("Sheet !", datetime(), datetime(), ? )' ;
 
         db.run(sql, data.proprietaire, function (err, result) {
@@ -63,9 +61,73 @@ module.exports = function (io) {
 
     });
 
+    router.post('/adduser/:id',(req,res) => {
 
+        let errors = [];
 
+        if (!req.body.idUser){
+            errors.push("No idUser specified");
+        }
+        if (errors.length){
+            res.status(400).json({"error":errors.join(",")});
+            return;
+        }
 
+        let sql = 'Insert into participation (idSheet,participant) VALUES (?,?);'
+        db.run(sql,[req.params.id,req.body.idUser],function(err,row) {
+            if (err){
+                res.status(400).json({"error":err.message});
+                return;
+            }
+            res.json({
+                "message":"success"
+            })
+        });
+
+    });
+
+    router.post('/checkuser/:id',(req,res)=>{
+
+        let errors =[];
+
+        if (!req.body.idUser){
+            errors.push("No idUser specified");
+        }
+        if (errors.length){
+            res.status(400).json({"error":errors.join(",")});
+            return;
+        }
+        let sql ='Select * from participation where participant = ? and idSheet = ?;'
+        db.get(sql,[req.body.idUser,req.params.id],function(err,row){
+            if (err){
+                res.status(400).json({'error':err.message});
+                return;
+            }
+            console.log(row);
+            if (row===undefined) {
+
+                let sql ='Select * from sheet where proprietaire = ? and idSheet = ?;'
+                db.get(sql,[req.body.idUser,req.params.id],function(err,row2) {
+                    if (err) {
+                        res.status(400).json({'error': err.message});
+                        return;
+                    }
+                    if(row2===undefined){
+                        res.status(403).json({"error": "Don't participe in this sheet"});
+                        return;
+                    }
+                    res.json({
+                        "message":"success",
+                    })
+                });
+            }
+            else {
+                res.json({
+                    "message":"success",
+                })
+            }
+        })}
+    );
 
     router.delete('/:id', (
         req,
@@ -88,7 +150,6 @@ module.exports = function (io) {
 
         if (!req.body.newName){
             errors.push("No newName specified");
-
         }
         if (errors.length){
             res.status(400).json({"error":errors.join(",")});
