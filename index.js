@@ -77,29 +77,35 @@ app.get('/api/sheets/:userid', (
 });
 
 
-let users = [];
-
+let users = new Map();
 
 io.on('connection',(socket)=> {
-        console.log('connected');
-        let username = "";
+        let userId = -1;
         socket.on('disconnect',()=>{
-            console.log(username + ' disconnected');
-            users.splice(users.indexOf(username), 1);
-            io.emit('user_disconnected', users);
-        })
-        socket.on('identification',(id) => {
-            if(!users.includes(id))
-                users.push(id);
 
-            username = id;
-            io.emit('user_connected',users);
-            console.log("utilisateur connecté :"+id);
+            users.delete(userId);
+
+            io.emit('user_disconnected', mapToArray(users));
+            console.log("User " + userId + ' disconnected');
+        })
+        socket.on('identification',(user) => {
+            users.set(user.id, {username : user.first_name + " " + user.last_name,x : -1, y : -1})
+            userId = user.id;
+
+            io.emit('user_connected', mapToArray(users));
+            console.log("User " + user.id + " connected");
+        })
+        socket.on('select_cell', (id, x, y) => {
+
+            users.set(id, {username : users.get(id)?.username, x, y})
+            io.emit('selected_cell', mapToArray(users))
+            console.log("User " + id + " moved focus to cell (" + x + ", " + y + ")")
         })
     });
 
-
-
+function mapToArray (map) {
+    return Array.from(map, ([id, infos]) => ({id, infos}));
+}
 
 
 // lancement du serveur avec log du moment où il est prêt
