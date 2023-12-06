@@ -78,6 +78,7 @@ app.get('/api/sheets/:userid', (
 
 
 let users = new Map();
+const colors = ['green', 'red', 'pink', 'yellow', 'purple', 'blue']
 
 io.on('connection',(socket)=> {
         let userId = -1;
@@ -89,7 +90,7 @@ io.on('connection',(socket)=> {
             console.log("User " + userId + ' disconnected');
         })
         socket.on('identification',(user) => {
-            users.set(user.id, {username : user.first_name + " " + user.last_name,x : -1, y : -1})
+            users.set(user.id, {username : user.first_name + " " + user.last_name, x : -1, y : -1, color : colors[Math.floor(Math.random() * colors.length)]})
             userId = user.id;
 
             io.emit('user_connected', mapToArray(users));
@@ -97,7 +98,7 @@ io.on('connection',(socket)=> {
         })
         socket.on('select_cell', (id, x, y) => {
 
-            users.set(id, {username : users.get(id)?.username, x, y})
+            users.set(id, {username : users.get(id)?.username, x, y, color : users.get(id)?.color})
             io.emit('selected_cell', mapToArray(users))
             console.log("User " + id + " moved focus to cell (" + x + ", " + y + ")")
         })
