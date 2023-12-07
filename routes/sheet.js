@@ -61,6 +61,22 @@ module.exports = function (io) {
 
     });
 
+    router.get('/:id/members',(req,res) => {
+
+        let sql = 'Select distinct id,first_name, last_name, email from participation natural join user where idSheet = ?;'
+
+        db.all(sql,req.params.id,function (err,row){
+            if (err){
+                res.status(400).json({"error":err.message});
+                return;
+            }
+            res.json({
+                "message":"success",
+                "data":row,
+            })
+        });
+    })
+
     router.post('/adduser/:id',(req,res) => {
 
         let errors = [];
