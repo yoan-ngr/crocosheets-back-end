@@ -78,9 +78,11 @@ app.get('/api/sheets/:userid', (
 
 
 let users = new Map();
+let tableau = null;
 const colors = ['green', 'red', 'pink', 'yellow', 'purple', 'blue']
 
 io.on('connection',(socket)=> {
+
         let userId = -1;
         socket.on('disconnect',()=>{
 
@@ -89,8 +91,18 @@ io.on('connection',(socket)=> {
             io.emit('user_disconnected', mapToArray(users));
             console.log("User " + userId + ' disconnected');
         })
-        socket.on('identification',(user) => {
-
+        socket.on('identification',(user,id_sheet) => {
+            if(tableau === null){
+                let sql = "select contenu from sheet where idSheet = ?";
+                db.get(sql, id_sheet, function (err, result) {
+                    if (err) {
+                        //res.status(400).json({"error": err.message})
+                        console.log(err)
+                    }else {
+                        console.log(result+ "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW")
+                    }
+                })
+            }
             users.set(user.id, {username : generateName(), x : -1, y : -1, color : colors[Math.floor(Math.random() * colors.length)]})
             userId = user.id;
 
