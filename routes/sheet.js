@@ -122,9 +122,22 @@ module.exports = function (io) {
 
     router.get('/:id/notmembers',(req,res) => {
 
-        let sql = 'Select distinct id,first_name, last_name, email from participation natural join user where not idSheet = ? and id=participant;'
+        let sql = 'SELECT id,first_name,last_name,email\n' +
+            'FROM user u\n' +
+            'WHERE NOT EXISTS (\n' +
+            '    SELECT id\n' +
+            '    FROM participation p\n' +
+            '    WHERE p.participant = u.id\n' +
+            '      AND p.idSheet = ?\n' +
+            ')\n' +
+            'AND NOT EXISTS (\n' +
+            '    SELECT id\n' +
+            '    FROM sheet s\n' +
+            '    WHERE s.proprietaire = u.id\n' +
+            '      AND s.idSheet = ?\n' +
+            ');'
 
-        db.all(sql,req.params.id,function (err,row){
+        db.all(sql,[req.params.id,req.params.id],function (err,row){
             if (err){
                 res.status(400).json({"error":err.message});
                 return;
