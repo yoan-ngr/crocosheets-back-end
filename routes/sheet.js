@@ -291,8 +291,9 @@ module.exports = function (io) {
             io.emit('selected_cell', mapToArray(users))
             console.log("User " + id + " moved focus to cell (" + x + ", " + y + ")")
         })
-        socket.on('modifie_cell', (id, x, y, val) => {
-
+        socket.on('modify_cell', (x, y, val) => {
+            tableau[x][y] = val;
+            io.emit('modified_cell', x, y, val)
         })
     });
 
