@@ -4,9 +4,8 @@ module.exports = function (io) {
     const express = require('express'), router = express.Router();
     const db = require("../database");
 
-    let users = new Map();
-    let tableau = null;
-    let sheets = new Map()
+
+    let sheets = new Map();
     const colors = ['green', 'red', 'pink', 'yellow', 'purple', 'blue']
 
     router.post('/', (
@@ -23,7 +22,7 @@ module.exports = function (io) {
             for (let j = 0; j < 25 ; j++) {
                 contenu+=";"
             }
-            contenu+="\n"
+            contenu+="\n";
         }
         db.run(sql, data.proprietaire,contenu, function (err, result) {
             if (err) {
@@ -70,7 +69,7 @@ module.exports = function (io) {
                             content.push(values);
                         }
                     }
-                    sheets.set(req.params.id, {tableau : content , utilisateurs : []})
+                    sheets.set(req.params.id, {tableau : content , utilisateurs : new Map()})
                     //tableau = content;
                 }
             })
@@ -90,6 +89,7 @@ module.exports = function (io) {
                 return;
             }
             //row.contenu = convertToCSV(tableau);
+            console.log(req.params.id +"WWWWWWWWWWWW")
             row.contenu = convertToCSV(sheets.get(req.params.id).tableau);
 
             res.json({
@@ -279,26 +279,30 @@ module.exports = function (io) {
 
 
     io.on('connection',(socket)=> {
-
+        let id_sheet_save = -1;
         let userId = -1;
         socket.on('disconnect',()=>{
+            console.log(id_sheet_save)
+            sheets.get(id_sheet_save).utilisateurs.delete(userId);
+            //users.delete(userId);
 
-            users.delete(userId);
-
-            io.emit('user_disconnected', mapToArray(users));
+            io.emit('user_disconnected', mapToArray(sheets.get(id_sheet_save).utilisateurs));
             console.log("User " + userId + ' disconnected');
         })
         socket.on('identification',(user,id_sheet) => {
-            users.set(user.id, {username : generateName(), x : -1, y : -1, color : colors[Math.floor(Math.random() * colors.length)]})
+            id_sheet_save = id_sheet;
+            sheets.get(id_sheet).utilisateurs.set(user.id, {username : generateName(), x : -1, y : -1, color : colors[Math.floor(Math.random() * colors.length)]})
+            //users.set(user.id, {username : generateName(), x : -1, y : -1, color : colors[Math.floor(Math.random() * colors.length)]})
             userId = user.id;
 
-            io.emit('user_connected', mapToArray(users));
+            io.emit('user_connected', mapToArray(sheets.get(id_sheet_save).utilisateurs));
             console.log("User " + user.id + " connected");
         })
-        socket.on('select_cell', (id, x, y) => {
-
+        socket.on('select_cell', (id, x, y,id_sheet) => {
+            console.log(sheets.get(id_sheet)+"WWWWWWWWWWWWWWWWW")
+            users = sheets.get(id_sheet).utilisateurs;
             users.set(id, {username : users.get(id)?.username, x, y, color : users.get(id)?.color})
-            io.emit('selected_cell', mapToArray(users))
+            io.emit('selected_cell', mapToArray(sheets.get(id_sheet_save).utilisateurs))
             console.log("User " + id + " moved focus to cell (" + x + ", " + y + ")")
         })
         socket.on('modify_cell', (x, y, val,id_sheet) => {
