@@ -51,17 +51,50 @@ module.exports = function (io) {
     router.get('/:id', (
         req,
         res) => {
+
+
+        if(tableau === null){
+            let sql = "select contenu from sheet where idSheet = ?";
+            db.get(sql, [req.params.id], function (err, result) {
+                if (err) {
+                    //res.status(400).json({"error": err.message})
+                    console.log(err)
+                }else {
+                    let content = [];
+                    const lines = result.contenu.split('\n');
+
+                    for (let i = 0; i < lines.length; i++) {
+                        const line = lines[i].trim();
+
+                        if (line) {
+                            const values = line.split(';');
+                            content.push(values);
+                        }
+                    }
+
+                    tableau = content;
+                }
+            })
+        }
+
+
         let params = [req.params.id];
-        let sql = "select * from sheet where idSheet = ?";
+        let sql = "select idSheet, nomDocument, dateDeModification, dateDeCreation, proprietaire from sheet where idSheet = ?";
+
         db.get(sql,params,(err, row)=>{
             if (err) {
                 res.status(400).json({"error":err.message});
+                console.log(err)
                 return;
             }
             if (row===undefined) {
                 res.status(404).json({"error" : "No sheet"});
                 return;
             }
+
+            row.contenu = convertToCSV(tableau);
+
+            console.log(row.contenu);
             res.json({
                 "message":"success",
                 "data":row
@@ -246,30 +279,6 @@ module.exports = function (io) {
             console.log("User " + userId + ' disconnected');
         })
         socket.on('identification',(user,id_sheet) => {
-            if(tableau === null){
-                let sql = "select contenu from sheet where idSheet = ?";
-                db.get(sql, [id_sheet], function (err, result) {
-                    if (err) {
-                        //res.status(400).json({"error": err.message})
-                        console.log(err)
-                    }else {
-                        let content = [];
-                        const lines = result.contenu.split('\n');
-
-                        for (let i = 0; i < lines.length; i++) {
-                            const line = lines[i].trim();
-
-                            if (line) {
-                                const values = line.split(';');
-                                content.push(values);
-                            }
-                        }
-
-                        tableau = content;
-                        console.log(tableau[0][0]+"WWWWWWWWWWWWWWWWWWWWWWWWW")
-                    }
-                })
-            }
             users.set(user.id, {username : generateName(), x : -1, y : -1, color : colors[Math.floor(Math.random() * colors.length)]})
             userId = user.id;
 
@@ -471,7 +480,30 @@ module.exports = function (io) {
     function generateName () {
         return animals[Math.floor(Math.random() * animals.length)] + " " + adjectives[Math.floor(Math.random() * adjectives.length)];
     }
+    function convertToCSV(matrix) {
+        if (!Array.isArray(matrix) || matrix.length === 0 || !Array.isArray(matrix[0]) || matrix[0].length === 0) {
+            console.error('Invalid input. Please provide a non-empty 2D array.');
+            return '';
+        }
 
+        // Escaping function for CSV
+        function escapeCSVValue(value) {
+            if (typeof value === 'string') {
+                // Escape double quotes by replacing them with two double quotes
+                return  value.replace(/"/g, '""') ;
+            } else {
+                return value;
+            }
+        }
+
+        // Convert the matrix to CSV format
+        const csvRows = matrix.map(row => row.map(escapeCSVValue).join(';'));
+
+        // Join the rows with newline characters
+        const csvString = csvRows.join('\n');
+
+        return csvString;
+    }
 
     return router;
 }
