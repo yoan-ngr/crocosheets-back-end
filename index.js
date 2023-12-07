@@ -183,6 +183,7 @@ const animals = [
     "Autruche",
     "Concombre de Mer",
     "Brebis",
+    "Kiwi",
 ]
 const adjectives = [
     "Cringe",
@@ -279,6 +280,10 @@ const adjectives = [
     "Bleu",
     "Haineux",
     "Crédible",
+    "Fumé",
+    "Salé",
+    "Incapable",
+    "Moldave",
 ]
 
 function generateName () {
