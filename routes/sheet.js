@@ -13,9 +13,15 @@ module.exports = function (io) {
             proprietaire: req.body.proprietaire
         }
 
-        let sql= 'INSERT INTO sheet(nomDocument, dateDeModification, dateDeCreation, proprietaire) VALUES ("Sheet !", datetime(), datetime(), ? )' ;
-
-        db.run(sql, data.proprietaire, function (err, result) {
+        let sql= 'INSERT INTO sheet(nomDocument, dateDeModification, dateDeCreation, proprietaire, contenu) VALUES ("Sheet !", datetime(), datetime(), ?, ?)' ;
+        let contenu ="" ;
+        for (let i = 0; i < 25; i++) {
+            for (let j = 0; j < 25 ; j++) {
+                contenu+=";"
+            }
+            contenu+="\n"
+        }
+        db.run(sql, data.proprietaire,contenu, function (err, result) {
             if (err) {
                 //res.status(400).json({"error": err.message})
                 console.log(err)

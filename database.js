@@ -61,6 +61,7 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
             dateDeModification date, 
             dateDeCreation date, 
             proprietaire INTEGER,
+            contenu text,
             FOREIGN KEY (proprietaire) REFERENCES user(id)
             )`,
             (err) => {
