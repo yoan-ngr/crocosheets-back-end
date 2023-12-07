@@ -308,6 +308,16 @@ module.exports = function (io) {
             tableau[x][y] = val;
             io.emit('modified_cell', x, y, val)
         })
+        socket.on('save',(id) =>{
+            let saveSheet = convertToCSV(tableau);
+            let sql = 'Update sheet Set contenu = ? where idSheet = ?;'
+            db.run(sql,[saveSheet,id],function (err,row){
+                if (err){
+                    console.log("Can't save the sheet in the database");
+                }
+            })
+        })
+
     });
 
     function mapToArray (map) {
