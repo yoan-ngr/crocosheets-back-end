@@ -86,6 +86,21 @@ module.exports = function (io) {
 
     });
 
+    router.delete('/:id/user/:iduser',(req,res)=>{
+
+        let sql = 'Delete from participation where idSheet = ? and participant = ? ;'
+        db.run(sql,[req.params.id,req.params.iduser],function(err,row) {
+            if (err){
+                res.status(400).json({"error":err.message});
+                return;
+            }
+            res.json({
+                "message":"success"
+            })
+        });
+
+    })
+
     router.post('/checkuser/:id',(req,res)=>{
 
         let errors =[];
