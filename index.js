@@ -24,7 +24,7 @@ const db = require('./database');
 const bodyParser = require("body-parser");
 const cors = require('cors')
 const io = new Server(server,{cors : {
-    origin : "http://localhost:5173"
+        origin : "http://localhost:5173"
     }});
 const bcrypt = require("bcrypt");
 
@@ -83,42 +83,55 @@ const colors = ['green', 'red', 'pink', 'yellow', 'purple', 'blue']
 
 io.on('connection',(socket)=> {
 
-        let userId = -1;
-        socket.on('disconnect',()=>{
+    let userId = -1;
+    socket.on('disconnect',()=>{
 
-            users.delete(userId);
+        users.delete(userId);
 
-            io.emit('user_disconnected', mapToArray(users));
-            console.log("User " + userId + ' disconnected');
-        })
-        socket.on('identification',(user,id_sheet) => {
-            if(tableau === null){
-                let sql = "select contenu from sheet where idSheet = ?";
-                db.get(sql, id_sheet, function (err, result) {
-                    if (err) {
-                        //res.status(400).json({"error": err.message})
-                        console.log(err)
-                    }else {
-                        console.log(result+ "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW")
+        io.emit('user_disconnected', mapToArray(users));
+        console.log("User " + userId + ' disconnected');
+    })
+    socket.on('identification',(user,id_sheet) => {
+        if(tableau === null){
+            let sql = "select contenu from sheet where idSheet = ?";
+            db.get(sql, [id_sheet], function (err, result) {
+                if (err) {
+                    //res.status(400).json({"error": err.message})
+                    console.log(err)
+                }else {
+                    let content = [];
+                    const lines = result.contenu.split('\n');
+
+                    for (let i = 0; i < lines.length; i++) {
+                        const line = lines[i].trim();
+
+                        if (line) {
+                            const values = line.split(';');
+                            content.push(values);
+                        }
                     }
-                })
-            }
-            users.set(user.id, {username : generateName(), x : -1, y : -1, color : colors[Math.floor(Math.random() * colors.length)]})
-            userId = user.id;
 
-            io.emit('user_connected', mapToArray(users));
-            console.log("User " + user.id + " connected");
-        })
-        socket.on('select_cell', (id, x, y) => {
+                    tableau = content;
+                    console.log(tableau[0][0]+"WWWWWWWWWWWWWWWWWWWWWWWWW")
+                }
+            })
+        }
+        users.set(user.id, {username : generateName(), x : -1, y : -1, color : colors[Math.floor(Math.random() * colors.length)]})
+        userId = user.id;
 
-            users.set(id, {username : users.get(id)?.username, x, y, color : users.get(id)?.color})
-            io.emit('selected_cell', mapToArray(users))
-            console.log("User " + id + " moved focus to cell (" + x + ", " + y + ")")
-        })
-        socket.on('modifie_cell', (id, x, y, val) => {
+        io.emit('user_connected', mapToArray(users));
+        console.log("User " + user.id + " connected");
+    })
+    socket.on('select_cell', (id, x, y) => {
 
-        })
-    });
+        users.set(id, {username : users.get(id)?.username, x, y, color : users.get(id)?.color})
+        io.emit('selected_cell', mapToArray(users))
+        console.log("User " + id + " moved focus to cell (" + x + ", " + y + ")")
+    })
+    socket.on('modifie_cell', (id, x, y, val) => {
+
+    })
+});
 
 function mapToArray (map) {
     return Array.from(map, ([id, infos]) => ({id, infos}));
