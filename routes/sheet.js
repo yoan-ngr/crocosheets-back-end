@@ -299,11 +299,17 @@ module.exports = function (io) {
         socket.on('identification',(user,id_sheet) => {
             id_sheet_save = id_sheet;
             console.log(JSON.stringify(sheets)+"11111111111111111111"+id_sheet);
-            sheets.get(id_sheet).utilisateurs.set(user.id, {username : generateName(), x : -1, y : -1, color : colors[Math.floor(Math.random() * colors.length)]})
+            sheets.get(id_sheet).utilisateurs.set(user.id, {username : generateName(), x : -1, y : -1, color : colors[Math.floor(Math.random() * colors.length)],socket})
+
             //users.set(user.id, {username : generateName(), x : -1, y : -1, color : colors[Math.floor(Math.random() * colors.length)]})
             userId = user.id;
+            let users_tmp = new Map();
+            for (let [user_id,data] of sheets.get(id_sheet).utilisateurs) {
+                users_tmp.set(user_id, {username : data.username,x : data.x, y : data.y, color: data.color })
+            }
 
-            io.emit('user_connected', mapToArray(sheets.get(id_sheet_save).utilisateurs));
+            io.emit('user_connected', mapToArray(users_tmp));
+            //io.emit('user_connected', mapToArray(sheets.get(id_sheet_save).utilisateurs));
             console.log("User " + user.id + " connected");
         })
         socket.on('select_cell', (id, x, y,id_sheet) => {
@@ -316,6 +322,15 @@ module.exports = function (io) {
         socket.on('modify_cell', (x, y, val,id_sheet) => {
             sheets.get(id_sheet).tableau[x][y] = val;
             //tableau[x][y] = val;
+            /*
+            const utilisateursMap = sheets.get(id_sheet).utilisateurs;
+            for (const [userId, userData] of Object.entries(utilisateursMap)) {
+                //userData.socket.emit('modified_cell', x, y, val);
+                // Maintenant, userId est la clé et userData est la valeur de la map
+                // Faites quelque chose avec userId et userData ici
+            }
+
+             */
             io.emit('modified_cell', x, y, val)
         })
         socket.on('save',(id) =>{
