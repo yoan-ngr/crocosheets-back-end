@@ -15,7 +15,7 @@ module.exports = function (io) {
 
         let sql= 'INSERT INTO sheet(nomDocument, dateDeModification, dateDeCreation, proprietaire, contenu) VALUES ("Sheet !", datetime(), datetime(), ?, ?)' ;
         let contenu ="" ;
-        for (let i = 0; i < 25; i++) {
+        for (let i = 0; i < 26; i++) {
             for (let j = 0; j < 25 ; j++) {
                 contenu+=";"
             }
