@@ -105,9 +105,6 @@ io.on('connection',(socket)=> {
         })
         socket.on('modifie_cell', (id, x, y, val) => {
 
-            users.set(id, {username : users.get(id)?.username, x, y, color : users.get(id)?.color})
-            io.emit('selected_cell', mapToArray(users))
-            console.log("User " + id + " moved focus to cell (" + x + ", " + y + ")")
         })
     });
 
