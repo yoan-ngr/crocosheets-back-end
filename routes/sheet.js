@@ -6,12 +6,12 @@ module.exports = function (io) {
 
     let users = new Map();
     let tableau = null;
+    let sheets = new Map()
     const colors = ['green', 'red', 'pink', 'yellow', 'purple', 'blue']
 
     router.post('/', (
         req,
         res) => {
-
 
         let data = {
             proprietaire: req.body.proprietaire
@@ -51,9 +51,8 @@ module.exports = function (io) {
     router.get('/:id', (
         req,
         res) => {
-
-
-        if(tableau === null){
+        if (sheets.get(req.params.id) == null) {
+        //if(tableau === null){
             let sql = "select contenu from sheet where idSheet = ?";
             db.get(sql, [req.params.id], function (err, result) {
                 if (err) {
@@ -71,12 +70,11 @@ module.exports = function (io) {
                             content.push(values);
                         }
                     }
-
-                    tableau = content;
+                    sheets.set(req.params.id, {tableau : content , utilisateurs : []})
+                    //tableau = content;
                 }
             })
         }
-
 
         let params = [req.params.id];
         let sql = "select idSheet, nomDocument, dateDeModification, dateDeCreation, proprietaire from sheet where idSheet = ?";
@@ -91,10 +89,9 @@ module.exports = function (io) {
                 res.status(404).json({"error" : "No sheet"});
                 return;
             }
+            //row.contenu = convertToCSV(tableau);
+            row.contenu = convertToCSV(sheets.get(req.params.id).tableau);
 
-            row.contenu = convertToCSV(tableau);
-
-            console.log(row.contenu);
             res.json({
                 "message":"success",
                 "data":row
@@ -304,8 +301,9 @@ module.exports = function (io) {
             io.emit('selected_cell', mapToArray(users))
             console.log("User " + id + " moved focus to cell (" + x + ", " + y + ")")
         })
-        socket.on('modify_cell', (x, y, val) => {
-            tableau[x][y] = val;
+        socket.on('modify_cell', (x, y, val,id_sheet) => {
+            sheets.get(id_sheet).tableau[x][y] = val;
+            //tableau[x][y] = val;
             io.emit('modified_cell', x, y, val)
         })
         socket.on('save',(id) =>{
