@@ -286,31 +286,23 @@ module.exports = function (io) {
         let id_sheet_save = -1;
         let userId = -1;
         socket.on('disconnect',()=>{
-            console.log(id_sheet_save); // crash ici si un user essaye de se co à une page qu'il n'a pas le droit SI personne d'autorisé n'est deja dans la page
+            if(id_sheet_save !== -1){
             sheets.get(id_sheet_save).utilisateurs.delete(userId);
-            //users.delete(userId);
-
             io.emit('user_disconnected', mapToArray(get_users_tmp(sheets.get(id_sheet_save).utilisateurs)));
             console.log("User " + userId + ' disconnected');
+            }
         })
         socket.on('identification',(user,id_sheet) => {
             id_sheet_save = id_sheet;
             sheets.get(id_sheet).utilisateurs.set(user.id, {username : generateName(), x : -1, y : -1, color : colors[Math.floor(Math.random() * colors.length)],socket_user : socket})
-            console.log("LAAAAAAAAAAAAAAAAAAAAAAA"+sheets.get(id_sheet).utilisateurs.get(user.id).socket_user)
-            //users.set(user.id, {username : generateName(), x : -1, y : -1, color : colors[Math.floor(Math.random() * colors.length)]})
             userId = user.id;
-
             io.emit('user_connected', mapToArray(get_users_tmp(sheets.get(id_sheet).utilisateurs)));
-            //io.emit('user_connected', mapToArray(sheets.get(id_sheet_save).utilisateurs));
             console.log("User " + user.id + " connected");
         })
         socket.on('select_cell', (id, x, y,id_sheet) => {
             let users = sheets.get(id_sheet).utilisateurs;
             let socket_tmp = users.get(id).socket_user;
-            //users.set(id, {username : users.get(id)?.username, x, y, color : users.get(id)?.color})
             users.set(id, {username : users.get(id)?.username, x, y, color : users.get(id)?.color, socket_user : socket_tmp})
-            //io.emit('selected_cell', mapToArray(get_users_tmp(sheets.get(id_sheet).utilisateurs))) //????????????
-
             const utilisateursMap = sheets.get(id_sheet).utilisateurs;
             for (const [userId, userData] of utilisateursMap) {
                 userData.socket_user.emit('selected_cell', mapToArray(get_users_tmp(sheets.get(id_sheet).utilisateurs)));
@@ -320,15 +312,10 @@ module.exports = function (io) {
         })
         socket.on('modify_cell', (x, y, val,id_sheet) => {
             sheets.get(id_sheet).tableau[x][y] = val;
-            //tableau[x][y] = val;
-
             const utilisateursMap = sheets.get(id_sheet).utilisateurs;
             for (const [userId, userData] of utilisateursMap) {
                 userData.socket_user.emit('modified_cell', x, y, val);
             }
-            /*
-             */
-            //io.emit('modified_cell', x, y, val)
         })
         socket.on('save',(id) =>{
             let saveSheet = convertToCSV(sheets.get(id).tableau);
