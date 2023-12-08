@@ -150,6 +150,35 @@ module.exports = function (io) {
         });
     })
 
+    router.post('/usersheet',(req,res) => {
+        let errors = [];
+
+        if (!req.body.idUser){
+            errors.push("No idUser specified");
+        }
+        if (errors.length){
+            res.status(400).json({"error":errors.join(",")});
+            return;
+        }
+
+        let sql = 'SELECT DISTINCT s.*\n' +
+            'FROM sheet s\n' +
+            'LEFT JOIN participation p ON s.idSheet = p.idSheet\n' +
+            'WHERE p.participant = ?\n' +
+            '   OR s.proprietaire = ?; ;'
+        db.all(sql,[req.body.idUser,req.body.idUser],function(err,row) {
+            if (err){
+                res.status(400).json({"error":err.message});
+                return;
+            }
+            res.json({
+                "message":"success",
+                "data" : row
+            })
+        });
+
+    })
+
     router.post('/adduser/:id',(req,res) => {
 
         let errors = [];
@@ -323,7 +352,7 @@ module.exports = function (io) {
         socket.on('save',(id) =>{
             if(id_sheet_save !== -1) {
                 let saveSheet = convertToCSV(sheets.get(id).tableau);
-                let sql = 'Update sheet Set contenu = ? where idSheet = ?;'
+                let sql = 'Update sheet Set contenu = ?, dateDeModification = datetime() where idSheet = ?;'
                 db.run(sql,[saveSheet,id],function (err,row){
                     if (err){
                         console.log("Can't save the sheet in the database");
