@@ -161,7 +161,7 @@ module.exports = function (io) {
             return;
         }
 
-        let sql = 'SELECT DISTINCT s.*\n' +
+        let sql = 'SELECT DISTINCT s.idSheet, s.nomDocument, s.dateDeModification\n' +
             'FROM sheet s\n' +
             'LEFT JOIN participation p ON s.idSheet = p.idSheet\n' +
             'WHERE p.participant = ?\n' +
