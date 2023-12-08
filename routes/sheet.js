@@ -300,31 +300,36 @@ module.exports = function (io) {
             console.log("User " + user.id + " connected");
         })
         socket.on('select_cell', (id, x, y,id_sheet) => {
-            let users = sheets.get(id_sheet).utilisateurs;
-            let socket_tmp = users.get(id).socket_user;
-            users.set(id, {username : users.get(id)?.username, x, y, color : users.get(id)?.color, socket_user : socket_tmp})
-            const utilisateursMap = sheets.get(id_sheet).utilisateurs;
-            for (const [userId, userData] of utilisateursMap) {
-                userData.socket_user.emit('selected_cell', mapToArray(get_users_tmp(sheets.get(id_sheet).utilisateurs)));
+            if(id_sheet_save !== -1){
+                let users = sheets.get(id_sheet).utilisateurs;
+                let socket_tmp = users.get(id).socket_user;
+                users.set(id, {username : users.get(id)?.username, x, y, color : users.get(id)?.color, socket_user : socket_tmp})
+                const utilisateursMap = sheets.get(id_sheet).utilisateurs;
+                for (const [userId, userData] of utilisateursMap) {
+                    userData.socket_user.emit('selected_cell', mapToArray(get_users_tmp(sheets.get(id_sheet).utilisateurs)));
+                }
+                console.log("User " + id + " moved focus to cell (" + x + ", " + y + ")" +" in sheet :"+id_sheet)
             }
-
-            console.log("User " + id + " moved focus to cell (" + x + ", " + y + ")" +" in sheet :"+id_sheet)
         })
         socket.on('modify_cell', (x, y, val,id_sheet) => {
-            sheets.get(id_sheet).tableau[x][y] = val;
-            const utilisateursMap = sheets.get(id_sheet).utilisateurs;
-            for (const [userId, userData] of utilisateursMap) {
-                userData.socket_user.emit('modified_cell', x, y, val);
+            if(id_sheet_save !== -1) {
+                sheets.get(id_sheet).tableau[x][y] = val;
+                const utilisateursMap = sheets.get(id_sheet).utilisateurs;
+                for (const [userId, userData] of utilisateursMap) {
+                    userData.socket_user.emit('modified_cell', x, y, val);
+                }
             }
         })
         socket.on('save',(id) =>{
-            let saveSheet = convertToCSV(sheets.get(id).tableau);
-            let sql = 'Update sheet Set contenu = ? where idSheet = ?;'
-            db.run(sql,[saveSheet,id],function (err,row){
-                if (err){
-                    console.log("Can't save the sheet in the database");
-                }
-            })
+            if(id_sheet_save !== -1) {
+                let saveSheet = convertToCSV(sheets.get(id).tableau);
+                let sql = 'Update sheet Set contenu = ? where idSheet = ?;'
+                db.run(sql,[saveSheet,id],function (err,row){
+                    if (err){
+                        console.log("Can't save the sheet in the database");
+                    }
+                });
+            }
         })
 
     });
