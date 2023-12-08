@@ -75,8 +75,6 @@ module.exports = function (io) {
                         sheetsObj[key] = value;
                     });
 
-                    console.log(JSON.stringify(sheetsObj)+"0000000000000000");
-
                     //tableau = content;
                 }
             })
@@ -96,7 +94,6 @@ module.exports = function (io) {
                 return;
             }
             //row.contenu = convertToCSV(tableau);
-            console.log(req.params.id +"WWWWWWWWWWWWWWWW")
             row.contenu = convertToCSV(sheets.get(req.params.id).tableau);
 
             res.json({
@@ -289,49 +286,49 @@ module.exports = function (io) {
         let id_sheet_save = -1;
         let userId = -1;
         socket.on('disconnect',()=>{
-            console.log(JSON.stringify(sheets)+"33333333333333333"+id_sheet_save);
+            console.log(id_sheet_save); // crash ici si un user essaye de se co à une page qu'il n'a pas le droit SI personne d'autorisé n'est deja dans la page
             sheets.get(id_sheet_save).utilisateurs.delete(userId);
             //users.delete(userId);
 
-            io.emit('user_disconnected', mapToArray(sheets.get(id_sheet_save).utilisateurs));
+            io.emit('user_disconnected', mapToArray(get_users_tmp(sheets.get(id_sheet_save).utilisateurs)));
             console.log("User " + userId + ' disconnected');
         })
         socket.on('identification',(user,id_sheet) => {
             id_sheet_save = id_sheet;
-            console.log(JSON.stringify(sheets)+"11111111111111111111"+id_sheet);
-            sheets.get(id_sheet).utilisateurs.set(user.id, {username : generateName(), x : -1, y : -1, color : colors[Math.floor(Math.random() * colors.length)],socket})
-
+            sheets.get(id_sheet).utilisateurs.set(user.id, {username : generateName(), x : -1, y : -1, color : colors[Math.floor(Math.random() * colors.length)],socket_user : socket})
+            console.log("LAAAAAAAAAAAAAAAAAAAAAAA"+sheets.get(id_sheet).utilisateurs.get(user.id).socket_user)
             //users.set(user.id, {username : generateName(), x : -1, y : -1, color : colors[Math.floor(Math.random() * colors.length)]})
             userId = user.id;
-            let users_tmp = new Map();
-            for (let [user_id,data] of sheets.get(id_sheet).utilisateurs) {
-                users_tmp.set(user_id, {username : data.username,x : data.x, y : data.y, color: data.color })
-            }
 
-            io.emit('user_connected', mapToArray(users_tmp));
+            io.emit('user_connected', mapToArray(get_users_tmp(sheets.get(id_sheet).utilisateurs)));
             //io.emit('user_connected', mapToArray(sheets.get(id_sheet_save).utilisateurs));
             console.log("User " + user.id + " connected");
         })
         socket.on('select_cell', (id, x, y,id_sheet) => {
-            console.log(JSON.stringify(sheets)+"2222222222222 +"+id_sheet);
             let users = sheets.get(id_sheet).utilisateurs;
-            users.set(id, {username : users.get(id)?.username, x, y, color : users.get(id)?.color})
-            io.emit('selected_cell', mapToArray(sheets.get(id_sheet_save).utilisateurs))
+            let socket_tmp = users.get(id).socket_user;
+            //users.set(id, {username : users.get(id)?.username, x, y, color : users.get(id)?.color})
+            users.set(id, {username : users.get(id)?.username, x, y, color : users.get(id)?.color, socket_user : socket_tmp})
+            //io.emit('selected_cell', mapToArray(get_users_tmp(sheets.get(id_sheet).utilisateurs))) //????????????
+
+            const utilisateursMap = sheets.get(id_sheet).utilisateurs;
+            for (const [userId, userData] of utilisateursMap) {
+                userData.socket_user.emit('selected_cell', mapToArray(get_users_tmp(sheets.get(id_sheet).utilisateurs)));
+            }
+
             console.log("User " + id + " moved focus to cell (" + x + ", " + y + ")" +" in sheet :"+id_sheet)
         })
         socket.on('modify_cell', (x, y, val,id_sheet) => {
             sheets.get(id_sheet).tableau[x][y] = val;
             //tableau[x][y] = val;
-            /*
-            const utilisateursMap = sheets.get(id_sheet).utilisateurs;
-            for (const [userId, userData] of Object.entries(utilisateursMap)) {
-                //userData.socket.emit('modified_cell', x, y, val);
-                // Maintenant, userId est la clé et userData est la valeur de la map
-                // Faites quelque chose avec userId et userData ici
-            }
 
+            const utilisateursMap = sheets.get(id_sheet).utilisateurs;
+            for (const [userId, userData] of utilisateursMap) {
+                userData.socket_user.emit('modified_cell', x, y, val);
+            }
+            /*
              */
-            io.emit('modified_cell', x, y, val)
+            //io.emit('modified_cell', x, y, val)
         })
         socket.on('save',(id) =>{
             let saveSheet = convertToCSV(sheets.get(id).tableau);
@@ -348,6 +345,14 @@ module.exports = function (io) {
     function mapToArray (map) {
         return Array.from(map, ([id, infos]) => ({id, infos}));
     }
+    function get_users_tmp(map_user){
+        let users_tmp = new Map();
+        for (let [user_id,data] of map_user) {
+            users_tmp.set(user_id, {username : data.username,x : data.x, y : data.y, color: data.color })
+        }
+        return users_tmp;
+    }
+
 
     const animals = [
         "Lamantin",
