@@ -325,8 +325,13 @@ module.exports = function (io) {
             id_sheet_save = id_sheet;
             sheets.get(id_sheet).utilisateurs.set(user.id, {username : generateName(), x : -1, y : -1, color : colors[Math.floor(Math.random() * colors.length)],socket_user : socket})
             userId = user.id;
-            io.emit('user_connected', mapToArray(get_users_tmp(sheets.get(id_sheet).utilisateurs)));
-            console.log("User " + user.id + " connected");
+
+            let localUserMap = sheets.get(id_sheet).utilisateurs;
+            for (const [key, value] of localUserMap) {
+                value.socket_user.emit('user_connected', mapToArray(get_users_tmp(localUserMap)));
+            }
+            //io.emit('user_connected', mapToArray(get_users_tmp(sheets.get(id_sheet).utilisateurs)));
+            console.log("User " + user.id + " connected to sheet " + id_sheet);
         })
         socket.on('select_cell', (id, x, y,id_sheet) => {
             if(id_sheet_save !== -1){
