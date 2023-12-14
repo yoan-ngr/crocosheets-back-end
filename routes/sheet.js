@@ -5,7 +5,7 @@ module.exports = function (io) {
     const db = require("../database");
 
 
-    let sheets = new Map();
+    var sheets = new Map();
     const colors = ['green', 'red', 'pink', 'yellow', 'purple', 'blue']
 
     router.post('/', (
@@ -70,6 +70,11 @@ module.exports = function (io) {
                         }
                     }
                     sheets.set(req.params.id, {tableau : content , utilisateurs : new Map()})
+                    var sheetsObj = {};
+                    sheets.forEach((value, key) => {
+                        sheetsObj[key] = value;
+                    });
+
                     //tableau = content;
                 }
             })
@@ -89,7 +94,6 @@ module.exports = function (io) {
                 return;
             }
             //row.contenu = convertToCSV(tableau);
-            console.log(req.params.id +"WWWWWWWWWWWW")
             row.contenu = convertToCSV(sheets.get(req.params.id).tableau);
 
             res.json({
@@ -144,6 +148,35 @@ module.exports = function (io) {
                 "data":row,
             })
         });
+    })
+
+    router.post('/usersheet',(req,res) => {
+        let errors = [];
+
+        if (!req.body.idUser){
+            errors.push("No idUser specified");
+        }
+        if (errors.length){
+            res.status(400).json({"error":errors.join(",")});
+            return;
+        }
+
+        let sql = 'SELECT DISTINCT s.idSheet, s.nomDocument, s.dateDeModification\n' +
+            'FROM sheet s\n' +
+            'LEFT JOIN participation p ON s.idSheet = p.idSheet\n' +
+            'WHERE p.participant = ?\n' +
+            '   OR s.proprietaire = ?; ;'
+        db.all(sql,[req.body.idUser,req.body.idUser],function(err,row) {
+            if (err){
+                res.status(400).json({"error":err.message});
+                return;
+            }
+            res.json({
+                "message":"success",
+                "data" : row
+            })
+        });
+
     })
 
     router.post('/adduser/:id',(req,res) => {
@@ -282,42 +315,55 @@ module.exports = function (io) {
         let id_sheet_save = -1;
         let userId = -1;
         socket.on('disconnect',()=>{
-            console.log(id_sheet_save)
+            if(id_sheet_save !== -1){
             sheets.get(id_sheet_save).utilisateurs.delete(userId);
-            //users.delete(userId);
-
-            io.emit('user_disconnected', mapToArray(sheets.get(id_sheet_save).utilisateurs));
+            io.emit('user_disconnected', mapToArray(get_users_tmp(sheets.get(id_sheet_save).utilisateurs)));
             console.log("User " + userId + ' disconnected');
+            }
         })
         socket.on('identification',(user,id_sheet) => {
             id_sheet_save = id_sheet;
-            sheets.get(id_sheet).utilisateurs.set(user.id, {username : generateName(), x : -1, y : -1, color : colors[Math.floor(Math.random() * colors.length)]})
-            //users.set(user.id, {username : generateName(), x : -1, y : -1, color : colors[Math.floor(Math.random() * colors.length)]})
+            sheets.get(id_sheet).utilisateurs.set(user.id, {username : generateName(), x : -1, y : -1, color : colors[Math.floor(Math.random() * colors.length)],socket_user : socket})
             userId = user.id;
 
-            io.emit('user_connected', mapToArray(sheets.get(id_sheet_save).utilisateurs));
-            console.log("User " + user.id + " connected");
+            let localUserMap = sheets.get(id_sheet).utilisateurs;
+            for (const [key, value] of localUserMap) {
+                value.socket_user.emit('user_connected', mapToArray(get_users_tmp(localUserMap)));
+            }
+            //io.emit('user_connected', mapToArray(get_users_tmp(sheets.get(id_sheet).utilisateurs)));
+            console.log("User " + user.id + " connected to sheet " + id_sheet);
         })
         socket.on('select_cell', (id, x, y,id_sheet) => {
-            console.log(sheets.get(id_sheet)+"WWWWWWWWWWWWWWWWW")
-            users = sheets.get(id_sheet).utilisateurs;
-            users.set(id, {username : users.get(id)?.username, x, y, color : users.get(id)?.color})
-            io.emit('selected_cell', mapToArray(sheets.get(id_sheet_save).utilisateurs))
-            console.log("User " + id + " moved focus to cell (" + x + ", " + y + ")")
+            if(id_sheet_save !== -1){
+                let users = sheets.get(id_sheet).utilisateurs;
+                let socket_tmp = users.get(id).socket_user;
+                users.set(id, {username : users.get(id)?.username, x, y, color : users.get(id)?.color, socket_user : socket_tmp})
+                const utilisateursMap = sheets.get(id_sheet).utilisateurs;
+                for (const [userId, userData] of utilisateursMap) {
+                    userData.socket_user.emit('selected_cell', mapToArray(get_users_tmp(sheets.get(id_sheet).utilisateurs)));
+                }
+                console.log("User " + id + " moved focus to cell (" + x + ", " + y + ")" +" in sheet :"+id_sheet)
+            }
         })
         socket.on('modify_cell', (x, y, val,id_sheet) => {
-            sheets.get(id_sheet).tableau[x][y] = val;
-            //tableau[x][y] = val;
-            io.emit('modified_cell', x, y, val)
+            if(id_sheet_save !== -1) {
+                sheets.get(id_sheet).tableau[x][y] = val;
+                const utilisateursMap = sheets.get(id_sheet).utilisateurs;
+                for (const [userId, userData] of utilisateursMap) {
+                    userData.socket_user.emit('modified_cell', x, y, val);
+                }
+            }
         })
         socket.on('save',(id) =>{
-            let saveSheet = convertToCSV(tableau);
-            let sql = 'Update sheet Set contenu = ? where idSheet = ?;'
-            db.run(sql,[saveSheet,id],function (err,row){
-                if (err){
-                    console.log("Can't save the sheet in the database");
-                }
-            })
+            if(id_sheet_save !== -1) {
+                let saveSheet = convertToCSV(sheets.get(id).tableau);
+                let sql = 'Update sheet Set contenu = ?, dateDeModification = datetime() where idSheet = ?;'
+                db.run(sql,[saveSheet,id],function (err,row){
+                    if (err){
+                        console.log("Can't save the sheet in the database");
+                    }
+                });
+            }
         })
 
     });
@@ -325,6 +371,14 @@ module.exports = function (io) {
     function mapToArray (map) {
         return Array.from(map, ([id, infos]) => ({id, infos}));
     }
+    function get_users_tmp(map_user){
+        let users_tmp = new Map();
+        for (let [user_id,data] of map_user) {
+            users_tmp.set(user_id, {username : data.username,x : data.x, y : data.y, color: data.color })
+        }
+        return users_tmp;
+    }
+
 
     const animals = [
         {nom : "Lamantin", feminin : false},

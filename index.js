@@ -62,8 +62,12 @@ app.get('/api/sheets/:userid', (
     req,
     res) => {
 
-    let sql = "select * from sheet where proprietaire = ?"
-    let params = [req.params.userid]
+    let sql = 'SELECT DISTINCT s.idSheet, s.nomDocument, s.dateDeModification\n' +
+        'FROM sheet s\n' +
+        'LEFT JOIN participation p ON s.idSheet = p.idSheet\n' +
+        'WHERE p.participant = ?\n' +
+        '   OR s.proprietaire = ?; ;'
+    let params = [req.params.userid, req.params.userid]
     db.all(sql, params, (err, rows) => {
         if (err) {
             res.status(400).json({"error":err.message});
