@@ -1,13 +1,13 @@
-const db = require("../database");
 module.exports = function (io) {
 
     const express = require('express'), router = express.Router();
     const db = require("../database");
 
 
-    var sheets = new Map();
+    let sheets = new Map();
     const colors = ['green', 'red', 'pink', 'yellow', 'purple', 'blue']
 
+    // Route de création de feuille
     router.post('/', (
         req,
         res) => {
@@ -47,6 +47,7 @@ module.exports = function (io) {
 
     });
 
+    // Route de récupération de contenu de feuille
     router.get('/:id', (
         req,
         res) => {
@@ -70,7 +71,7 @@ module.exports = function (io) {
                         }
                     }
                     sheets.set(req.params.id, {tableau : content , utilisateurs : new Map()})
-                    var sheetsObj = {};
+                    let sheetsObj = {};
                     sheets.forEach((value, key) => {
                         sheetsObj[key] = value;
                     });
@@ -105,6 +106,7 @@ module.exports = function (io) {
 
     });
 
+    // Route de récupération de la liste des membres d'une feuille
     router.get('/:id/members',(req,res) => {
 
         let sql = 'Select distinct id,first_name, last_name, email from participation natural join user where idSheet = ? and participant = id;'
@@ -121,6 +123,7 @@ module.exports = function (io) {
         });
     })
 
+    // Route de récupération de la liste des utilisateurs qui ne sont pas membres d'une feuille
     router.get('/:id/notmembers',(req,res) => {
 
         let sql = 'SELECT id,first_name,last_name,email\n' +
@@ -150,35 +153,7 @@ module.exports = function (io) {
         });
     })
 
-    router.post('/usersheet',(req,res) => {
-        let errors = [];
-
-        if (!req.body.idUser){
-            errors.push("No idUser specified");
-        }
-        if (errors.length){
-            res.status(400).json({"error":errors.join(",")});
-            return;
-        }
-
-        let sql = 'SELECT DISTINCT s.idSheet, s.nomDocument, s.dateDeModification\n' +
-            'FROM sheet s\n' +
-            'LEFT JOIN participation p ON s.idSheet = p.idSheet\n' +
-            'WHERE p.participant = ?\n' +
-            '   OR s.proprietaire = ?; ;'
-        db.all(sql,[req.body.idUser,req.body.idUser],function(err,row) {
-            if (err){
-                res.status(400).json({"error":err.message});
-                return;
-            }
-            res.json({
-                "message":"success",
-                "data" : row
-            })
-        });
-
-    })
-
+    // Route d'ajout d'utilisateur à une feuille
     router.post('/adduser/:id',(req,res) => {
 
         let errors = [];
@@ -204,6 +179,7 @@ module.exports = function (io) {
 
     });
 
+    // Route de suppression d'utilisateur dans une feuille
     router.delete('/:id/user/:iduser',(req,res)=>{
 
         let sql = 'Delete from participation where idSheet = ? and participant = ? ;'
@@ -219,6 +195,7 @@ module.exports = function (io) {
 
     })
 
+    // Route de vérification d'appartenance d'un utilisateur
     router.post('/checkuser/:id',(req,res)=>{
 
         let errors =[];
@@ -262,6 +239,7 @@ module.exports = function (io) {
         })}
     );
 
+    // Route de suppression de feuille
     router.delete('/:id', (
         req,
         res) => {
@@ -277,6 +255,7 @@ module.exports = function (io) {
             });
     });
 
+    // Route de renommage de route
     router.patch('/:id',(req,res) => {
 
         let errors =[];
@@ -368,9 +347,12 @@ module.exports = function (io) {
 
     });
 
+    // Transforme une map en array (pour envoi via socket)
     function mapToArray (map) {
         return Array.from(map, ([id, infos]) => ({id, infos}));
     }
+
+    // Reformate la liste des utilisateurs pour la faire afficher correctement
     function get_users_tmp(map_user){
         let users_tmp = new Map();
         for (let [user_id,data] of map_user) {
@@ -568,11 +550,14 @@ module.exports = function (io) {
         {feminin : "Fabuleuse", masculin : "Fabuleux"},
     ]
 
+    // Génère un nom aléatoire avec les deux listes ci-dessus
     function generateName () {
         let animal = animals[Math.floor(Math.random() * animals.length)];
         let adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
         return animal.nom + " " + (animal.feminin ? adjective.feminin : adjective.masculin);
     }
+
+    // Convertit un tableau 2D en CSV pour la sauvegarde dans la base de données
     function convertToCSV(matrix) {
         if (!Array.isArray(matrix) || matrix.length === 0 || !Array.isArray(matrix[0]) || matrix[0].length === 0) {
             console.error('Invalid input. Please provide a non-empty 2D array.');

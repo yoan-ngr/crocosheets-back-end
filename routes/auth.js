@@ -3,6 +3,7 @@ const db = require("../database");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
+// Route d'authentification
 router.post('/login', (
     req,
     res) => {
@@ -85,7 +86,6 @@ router.post('/login', (
                     db.run(insert,id,token,function (err,result){
                         if (err){
                             res.status(400).json({"error": err.message})
-                            return;
                         }
 
                     })
@@ -95,7 +95,7 @@ router.post('/login', (
     })
 })
 
-
+// Route de déconnexion
 router.post('/logout',(req, res) =>{
     let errors=[]
     if (!req.body.id){

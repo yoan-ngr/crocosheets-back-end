@@ -2,14 +2,6 @@ const express = require('express'), router = express.Router();
 const db = require("../database");
 const bcrypt = require("bcrypt");
 
-router.get('/test', (
-    req,
-    res) => {
-    res.send({message:'OK'});
-});
-
-
-
 // Requête GET sur un utilisateur précis
 router.get('/:id', (
     req,
@@ -114,7 +106,7 @@ router.patch('/:id', (
 
     let saltRounds = parseInt(process.env.SALT_ROUNDS);
     bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
-        var data = {
+        let data = {
             name: req.body.name,
             email: req.body.email,
             password: req.body.password ? hash : null
