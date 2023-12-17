@@ -61,7 +61,7 @@ app.get('/api/sheets/:userid', (
     req,
     res) => {
 
-    let sql = 'SELECT DISTINCT s.idSheet, s.nomDocument, s.dateDeModification\n' +
+    let sql = 'SELECT DISTINCT s.idSheet, s.nomDocument, s.dateDeModification, s.proprietaire\n' +
         'FROM sheet s\n' +
         'LEFT JOIN participation p ON s.idSheet = p.idSheet\n' +
         'WHERE p.participant = ?\n' +
