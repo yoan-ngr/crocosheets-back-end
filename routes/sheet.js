@@ -51,6 +51,7 @@ module.exports = function (io) {
     router.get('/:id', (
         req,
         res) => {
+
         if (sheets.get(req.params.id) == null) {
         //if(tableau === null){
             let sql = "select contenu from sheet where idSheet = ?";
@@ -59,23 +60,24 @@ module.exports = function (io) {
                     //res.status(400).json({"error": err.message})
                     console.log(err)
                 }else {
-                    let content = [];
-                    const lines = result.contenu.split('\n');
+                    if (result && result.contenu) {
+                        let content = [];
+                        const lines = result.contenu.split('\n');
 
-                    for (let i = 0; i < lines.length; i++) {
-                        const line = lines[i].trim();
+                        for (let i = 0; i < lines.length; i++) {
+                            const line = lines[i].trim();
 
-                        if (line) {
-                            const values = line.split(';');
-                            content.push(values);
+                            if (line) {
+                                const values = line.split(';');
+                                content.push(values);
+                            }
                         }
+                        sheets.set(req.params.id, {tableau : content , utilisateurs : new Map()})
+                        let sheetsObj = {};
+                        sheets.forEach((value, key) => {
+                            sheetsObj[key] = value;
+                        });
                     }
-                    sheets.set(req.params.id, {tableau : content , utilisateurs : new Map()})
-                    let sheetsObj = {};
-                    sheets.forEach((value, key) => {
-                        sheetsObj[key] = value;
-                    });
-
                     //tableau = content;
                 }
             })
